@@ -11,7 +11,7 @@ const (
 	parityShardCnt = 3
 )
 
-type Conf struct {
+type conf struct {
 	version        string
 	dataLen        int64
 	dataShardCnt   uint8
@@ -19,8 +19,8 @@ type Conf struct {
 	shardCRC32Cs   []string
 }
 
-func NewConf(version string, dataLen int64, shardsHashes []string) Conf {
-	var conf Conf
+func newConf(version string, dataLen int64, shardsHashes []string) conf {
+	var conf conf
 	conf.version = version
 	conf.dataLen = dataLen
 	conf.dataShardCnt = dataShardCnt
@@ -29,7 +29,7 @@ func NewConf(version string, dataLen int64, shardsHashes []string) Conf {
 	return conf
 }
 
-func writeConf(outputFile *os.File, conf Conf) error {
+func writeConf(outputFile *os.File, conf conf) error {
 	_, err := fmt.Fprintf(outputFile, "version=%s\n", conf.version)
 	if err != nil {
 		return err

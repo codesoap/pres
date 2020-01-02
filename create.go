@@ -105,6 +105,9 @@ func writeHeader(inputFilename string, hashers []hash.Hash32) error {
 	defer outputFile.Close()
 	// FIXME: Do I really have to open the file again?
 	inputFile, err := os.Open(inputFilename)
+	if err != nil {
+		return err
+	}
 	dataLen, err := getDataLen(inputFile)
 	if err != nil {
 		return err
@@ -116,7 +119,7 @@ func writeHeader(inputFilename string, hashers []hash.Hash32) error {
 	for i := range hashers {
 		shardsHashes[i] = fmt.Sprint(hashers[i].Sum32())
 	}
-	conf := NewConf("1", dataLen, shardsHashes)
+	conf := newConf("1", dataLen, shardsHashes)
 	if _, err := fmt.Fprintln(outputFile, "[conf]"); err != nil {
 		return err
 	}
@@ -163,7 +166,7 @@ func removeFiles(filenames []string) error {
 
 func getDataInputs(inputFilename string) ([]*os.File, error) {
 	var err error
-	var shardSize int64 = 0
+	var shardSize int64
 	inputs := make([]*os.File, dataShardCnt)
 	for i := range inputs {
 		if inputs[i], err = os.Open(inputFilename); err != nil {
