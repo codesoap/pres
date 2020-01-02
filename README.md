@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/codesoap/songmem)](https://goreportcard.com/report/github.com/codesoap/pres)
+[![Go Report Card](https://goreportcard.com/badge/github.com/codesoap/pres)](https://goreportcard.com/report/github.com/codesoap/pres)
 
 Preserve files to make them resistant to
 [bit rot](https://en.wikipedia.org/wiki/Data_rot). This tool is intended
