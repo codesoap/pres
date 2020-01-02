@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func createConsFile() {
+func createPresFile() {
 	if len(os.Args) != 3 {
 		fmt.Fprintln(os.Stderr, "Provide one input file as the second argument")
 		os.Exit(1)
@@ -59,7 +59,7 @@ func getShardsHashers() []hash.Hash32 {
 }
 
 func getOutputFilename(inputFilename string) string {
-	return fmt.Sprint(inputFilename, ".cons")
+	return fmt.Sprint(inputFilename, ".pres")
 }
 
 func makeParityFilesAndCalculateHashes(inputFilename string, shardHashers []hash.Hash32) ([]string, error) {
@@ -208,7 +208,7 @@ func getParityOutputs() ([]*os.File, error) {
 	var err error
 	outputs := make([]*os.File, parityShardCnt)
 	for i := range outputs {
-		outputs[i], err = ioutil.TempFile("", "cons_parity_file_*")
+		outputs[i], err = ioutil.TempFile("", "pres_parity_file_*")
 		if err != nil {
 			return nil, err
 		}

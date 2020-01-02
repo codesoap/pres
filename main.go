@@ -21,7 +21,7 @@ func main() {
 	}
 	switch command {
 	case create:
-		createConsFile()
+		createPresFile()
 	}
 }
 

@@ -1,6 +1,6 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/codesoap/songmem)](https://goreportcard.com/report/github.com/codesoap/cons)
+[![Go Report Card](https://goreportcard.com/badge/github.com/codesoap/songmem)](https://goreportcard.com/report/github.com/codesoap/pres)
 
-Conserve files to make them resistant to
+Preserve files to make them resistant to
 [bit rot](https://en.wikipedia.org/wiki/Data_rot). This tool is intended
 to improve the longevity of backups.
 
@@ -8,18 +8,18 @@ to improve the longevity of backups.
 
 # Usage
 ```console
-$ cons create my_data.foo
-$ cons verify my_data.foo.cons
-$ cons restore my_data.foo.cons
+$ pres create my_data.foo
+$ pres verify my_data.foo.pres
+$ pres restore my_data.foo.pres
 ```
 
 # How it Works
-`cons` calculates and stores parity information for the given file
+`pres` calculates and stores parity information for the given file
 using [Solomon Reed error correction](https://en.wikipedia.org/wiki/Reed_Solomon).
 
 Together with the original data and the newly generated parity
 information, hashes of the data and parity information are stored
-(multiple times, for fail safety) in a `*.cons` file. The hashes
+(multiple times, for fail safety) in a `*.pres` file. The hashes
 correlate to so called "shards", segments of the data and parity
 information, that can be restored once corrupted.
 
@@ -28,14 +28,14 @@ information, that can be restored once corrupted.
 - Check if the stored hashes of all shards match the ones
   generated from the data and parity information.
    
-## Restoring the data from a `*.cons` file
+## Restoring the data from a `*.pres` file
 - If there are at least as many shards intact, as there are data
   shards, the corrupted shards can be restored.
 - Restoring the original data file is then simply a matter of
   concatenating the now repaired data shards.
    
 # Shortcomings
-- No inplace repair of `*.cons` files.
+- No inplace repair of `*.pres` files.
 - Added or lost data is not handled. Few bytes gone missing or being
   added may be handled in the future.
 
