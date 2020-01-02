@@ -7,9 +7,8 @@ import (
 
 // Constants for tuning the behaviour of the program.
 const (
-	dataShardCnt   = 5
-	parityShardCnt = 2
-	bufferSize     = 1048576 // 1MiB
+	dataShardCnt   = 100
+	parityShardCnt = 3
 )
 
 type Conf struct {
