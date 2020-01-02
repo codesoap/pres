@@ -19,9 +19,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Error when parsing command:", err.Error())
 		os.Exit(1)
 	}
+	if len(os.Args) != 3 {
+		fmt.Fprintln(os.Stderr, "Provide one input file as the second argument")
+		os.Exit(1)
+	}
+	inputFilename := os.Args[2]
 	switch command {
 	case create:
-		createPresFile()
+		createPresFile(inputFilename)
+	case verify:
+		verifyPresFile(inputFilename)
 	}
 }
 
@@ -34,6 +41,10 @@ func getCommand() (int, error) {
 		fallthrough
 	case "create":
 		return create, nil
+	case "v":
+		fallthrough
+	case "verify":
+		return verify, nil
 	default:
 		return -1, errors.New(fmt.Sprint("unknown command ", os.Args[1]))
 	}

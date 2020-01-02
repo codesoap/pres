@@ -14,6 +14,10 @@ $ pres verify my_data.foo.pres
 $ pres restore my_data.foo.pres
 ```
 
+# Installation
+`go get -v -u 'github.com/codesoap/pres'` will install the latest
+version of `pres` to `$HOME/go/bin/`.
+
 # How it Works
 `pres` calculates and stores parity information for the given file
 using [Solomon Reed error correction](https://en.wikipedia.org/wiki/Reed_Solomon).
@@ -36,9 +40,13 @@ information, that can be restored once corrupted.
   concatenating the now repaired data shards.
    
 # Shortcomings
-- No inplace repair of `*.pres` files.
+- The input file should be at least ~1KiB in size.
 - Added or lost data is not handled. Few bytes gone missing or being
   added may be handled in the future.
+- No inplace repair of `*.pres` files.
+- Although the data and parity shards can take at least three bit-flips
+  without becoming unrestorable, two bit-flips can already destroy the
+  header.
 
 # File Format Example
 ```

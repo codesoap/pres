@@ -12,12 +12,7 @@ import (
 	"strings"
 )
 
-func createPresFile() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "Provide one input file as the second argument")
-		os.Exit(1)
-	}
-	inputFilename := os.Args[2]
+func createPresFile(inputFilename string) {
 	outputFile, err := getOutputFile(inputFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error opening output:", err.Error())
@@ -26,13 +21,13 @@ func createPresFile() {
 	defer outputFile.Close()
 
 	hashers := getShardsHashers()
-	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums")
+	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums.")
 	parityFilenames, err := makeParityFilesAndCalculateHashes(inputFilename, hashers)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error creating parity files:", err.Error())
 		os.Exit(2)
 	}
-	fmt.Fprintln(os.Stderr, "Writing output")
+	fmt.Fprintln(os.Stderr, "Writing output.")
 	if err := writeHeader(inputFilename, outputFile, hashers); err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing Header:", err.Error())
 		os.Exit(3)
@@ -45,7 +40,7 @@ func createPresFile() {
 		fmt.Fprintln(os.Stderr, "Error writing parity to output:", err.Error())
 		os.Exit(4)
 	}
-	fmt.Fprintln(os.Stderr, "Removing temporary files")
+	fmt.Fprintln(os.Stderr, "Removing temporary files.")
 	if err = removeFiles(parityFilenames); err != nil {
 		fmt.Fprintln(os.Stderr, "Error removing temporary files:", err.Error())
 		os.Exit(5)
@@ -237,11 +232,7 @@ func getShardSize(input *os.File) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
-	shardSize := fileSize / dataShardCnt
-	if fileSize%dataShardCnt > 0 {
-		shardSize += 1
-	}
-	return shardSize, nil
+	return calculateShardSize(fileSize, dataShardCnt), nil
 }
 
 func getDataLen(input *os.File) (int64, error) {
