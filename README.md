@@ -9,6 +9,7 @@ to improve the longevity of backups.
 # Usage
 ```console
 $ pres create my_data.foo
+$ pres create my_data.foo > my_outfile.foo.pres
 $ pres verify my_data.foo.pres
 $ pres restore my_data.foo.pres
 ```

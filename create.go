@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/klauspost/reedsolomon"
+	"github.com/mattn/go-isatty"
 	"hash"
 	"hash/crc32"
 	"io"
@@ -17,11 +18,12 @@ func createPresFile() {
 		os.Exit(1)
 	}
 	inputFilename := os.Args[2]
-	outputFilename := getOutputFilename(inputFilename)
-	if _, err := os.Stat(outputFilename); !os.IsNotExist(err) {
-		fmt.Fprintln(os.Stderr, "The file", outputFilename, "already exists")
+	outputFile, err := getOutputFile(inputFilename)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error opening output:", err.Error())
 		os.Exit(1)
 	}
+	defer outputFile.Close()
 
 	hashers := getShardsHashers()
 	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums")
@@ -30,17 +32,17 @@ func createPresFile() {
 		fmt.Fprintln(os.Stderr, "Error creating parity files:", err.Error())
 		os.Exit(2)
 	}
-	fmt.Fprintln(os.Stderr, "Writing", outputFilename)
-	if err := writeHeader(inputFilename, hashers); err != nil {
+	fmt.Fprintln(os.Stderr, "Writing output")
+	if err := writeHeader(inputFilename, outputFile, hashers); err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing Header:", err.Error())
 		os.Exit(3)
 	}
-	if err = copyOverData(outputFilename, inputFilename); err != nil {
-		fmt.Fprintln(os.Stderr, "Error writing data to outfile:", err.Error())
+	if err = copyOverData(outputFile, inputFilename); err != nil {
+		fmt.Fprintln(os.Stderr, "Error writing data to output:", err.Error())
 		os.Exit(4)
 	}
-	if err = copyOverData(outputFilename, parityFilenames...); err != nil {
-		fmt.Fprintln(os.Stderr, "Error writing parity to outfile:", err.Error())
+	if err = copyOverData(outputFile, parityFilenames...); err != nil {
+		fmt.Fprintln(os.Stderr, "Error writing parity to output:", err.Error())
 		os.Exit(4)
 	}
 	fmt.Fprintln(os.Stderr, "Removing temporary files")
@@ -50,16 +52,20 @@ func createPresFile() {
 	}
 }
 
+func getOutputFile(inputFilename string) (*os.File, error) {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		outputFilename := fmt.Sprint(inputFilename, ".pres")
+		return os.Create(outputFilename)
+	}
+	return os.Stdout, nil
+}
+
 func getShardsHashers() []hash.Hash32 {
 	hashers := make([]hash.Hash32, dataShardCnt+parityShardCnt)
 	for i := 0; i < dataShardCnt+parityShardCnt; i += 1 {
 		hashers[i] = crc32.New(crc32.MakeTable(crc32.Castagnoli))
 	}
 	return hashers
-}
-
-func getOutputFilename(inputFilename string) string {
-	return fmt.Sprint(inputFilename, ".pres")
 }
 
 func makeParityFilesAndCalculateHashes(inputFilename string, shardHashers []hash.Hash32) ([]string, error) {
@@ -96,13 +102,7 @@ func makeParityFilesAndCalculateHashes(inputFilename string, shardHashers []hash
 	return parityFilenames, nil
 }
 
-func writeHeader(inputFilename string, hashers []hash.Hash32) error {
-	outputFilename := getOutputFilename(inputFilename)
-	outputFile, err := os.Create(outputFilename)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
+func writeHeader(inputFilename string, outputFile *os.File, hashers []hash.Hash32) error {
 	// FIXME: Do I really have to open the file again?
 	inputFile, err := os.Open(inputFilename)
 	if err != nil {
@@ -136,12 +136,7 @@ func writeHeader(inputFilename string, hashers []hash.Hash32) error {
 	return err
 }
 
-func copyOverData(destFilename string, srcFilenames ...string) error {
-	destFile, err := os.OpenFile(destFilename, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
+func copyOverData(destFile *os.File, srcFilenames ...string) error {
 	for _, srcFilename := range srcFilenames {
 		srcFile, err := os.Open(srcFilename)
 		if err != nil {
