@@ -29,13 +29,13 @@ func restoreData(inFilename string) {
 		os.Exit(2)
 	}
 	fmt.Fprintln(os.Stderr, "Restoring damaged shards.")
-	restoredShards, err := restore2(inFilename, shardStates, conf)
+	restoredShards, err := restore(inFilename, shardStates, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error restoring damaged shards:", err.Error())
 		os.Exit(3)
 	}
 	fmt.Fprintln(os.Stderr, "Verifying restored data.")
-	err = verify2(inFilename, restoredShards, conf)
+	err = verify(inFilename, restoredShards, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error verifying restored shards:", err.Error())
 		os.Exit(4)
@@ -80,7 +80,7 @@ func getShardStates(inFilename string, conf conf) ([]bool, error) {
 	return shardStates, nil
 }
 
-func restore2(inFilename string, shardStates []bool, conf conf) ([]string, error) {
+func restore(inFilename string, shardStates []bool, conf conf) ([]string, error) {
 	readers, files, err := getShardReaders(inFilename, conf)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func restore2(inFilename string, shardStates []bool, conf conf) ([]string, error
 	return outFilenames, err
 }
 
-func verify2(inFilename string, restoredShards []string, conf conf) error {
+func verify(inFilename string, restoredShards []string, conf conf) error {
 	readers, files, err := getRestoredReaders(inFilename, restoredShards, conf)
 	if err != nil {
 		return err

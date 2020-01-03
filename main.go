@@ -8,9 +8,9 @@ import (
 
 // Possible commands
 const (
-	create = iota
-	verify
-	restore
+	createCommand = iota
+	verifyCommand
+	restoreCommand
 )
 
 func main() {
@@ -25,11 +25,11 @@ func main() {
 	}
 	inFilename := os.Args[2]
 	switch command {
-	case create:
+	case createCommand:
 		createPresFile(inFilename)
-	case verify:
+	case verifyCommand:
 		verifyPresFile(inFilename)
-	case restore:
+	case restoreCommand:
 		restoreData(inFilename)
 	}
 }
@@ -42,15 +42,15 @@ func getCommand() (int, error) {
 	case "c":
 		fallthrough
 	case "create":
-		return create, nil
+		return createCommand, nil
 	case "v":
 		fallthrough
 	case "verify":
-		return verify, nil
+		return verifyCommand, nil
 	case "r":
 		fallthrough
 	case "restore":
-		return restore, nil
+		return restoreCommand, nil
 	default:
 		return -1, errors.New(fmt.Sprint("unknown command ", os.Args[1]))
 	}
