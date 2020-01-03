@@ -4,8 +4,6 @@ Preserve files to make them resistant to
 [bit rot](https://en.wikipedia.org/wiki/Data_rot). This tool is intended
 to improve the longevity of backups.
 
-**This is still a work in progress**
-
 # Usage
 ```console
 $ pres create my_data.foo
