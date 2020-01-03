@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/klauspost/reedsolomon"
 	"github.com/mattn/go-isatty"
@@ -18,6 +19,12 @@ func createPresFile(inFilename string) {
 		os.Exit(1)
 	}
 	defer outputFile.Close()
+	if err = checkFilesize(inFilename); err != nil {
+		fmt.Fprintln(os.Stderr, "Error checking input filesize:", err.Error())
+		fmt.Fprintln(os.Stderr, "The input file must contain at least",
+			int(dataShardCnt)*int(dataShardCnt), "bytes.")
+		os.Exit(1)
+	}
 
 	hashers := getShardsHashers()
 	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums.")
@@ -51,6 +58,22 @@ func getPresOutput(inFilename string) (*os.File, error) {
 		return os.Create(outputFilename)
 	}
 	return os.Stdout, nil
+}
+
+func checkFilesize(inFilename string) error {
+	inFile, err := os.Open(inFilename)
+	if err != nil {
+		return err
+	}
+	defer inFile.Close()
+	dataLen, err := getDataLen(inFile)
+	if err != nil {
+		return err
+	}
+	if dataLen < int64(dataShardCnt)*int64(dataShardCnt) {
+		return errors.New("file is too small")
+	}
+	return nil
 }
 
 func getShardsHashers() []hash.Hash32 {

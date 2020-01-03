@@ -41,7 +41,8 @@ information, that can be restored once corrupted.
   concatenating the now repaired data shards.
    
 # Shortcomings
-- The input file should be at least ~1KiB in size.
+- The input file should at least contain 10_000 bytes of data (amount of
+  data shards squared).
 - Added or lost data is not handled. Few bytes gone missing or being
   added may be handled in the future.
 - No inplace repair of `*.pres` files.
