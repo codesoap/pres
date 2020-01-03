@@ -39,7 +39,6 @@ func createPresFile(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error writing parity to output:", err.Error())
 		os.Exit(4)
 	}
-	fmt.Fprintln(os.Stderr, "Removing temporary files.")
 	if err = removeFiles(parityFilenames); err != nil {
 		fmt.Fprintln(os.Stderr, "Error removing temporary files:", err.Error())
 		os.Exit(5)
