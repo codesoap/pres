@@ -75,6 +75,7 @@ information, that can be restored once corrupted.
 - Although the data and parity shards can take at least three bit-flips
   without becoming unrestorable, two bit-flips can already destroy the
   header.
+- Changes in the filename or other meta-data are not prevented.
 
 # File Format Example
 ```
