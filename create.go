@@ -11,8 +11,8 @@ import (
 	"os"
 )
 
-func createPresFile(inputFilename string) {
-	outputFile, err := getPresOutput(inputFilename)
+func createPresFile(inFilename string) {
+	outputFile, err := getPresOutput(inFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error opening output:", err.Error())
 		os.Exit(1)
@@ -21,17 +21,17 @@ func createPresFile(inputFilename string) {
 
 	hashers := getShardsHashers()
 	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums.")
-	parityFilenames, err := makeParityFilesAndCalculateHashes(inputFilename, hashers)
+	parityFilenames, err := makeParityFilesAndCalculateHashes(inFilename, hashers)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error creating parity files:", err.Error())
 		os.Exit(2)
 	}
 	fmt.Fprintln(os.Stderr, "Writing output.")
-	if err := writeHeader(inputFilename, outputFile, hashers); err != nil {
+	if err := writeHeader(inFilename, outputFile, hashers); err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing Header:", err.Error())
 		os.Exit(3)
 	}
-	if err = copyOverData(outputFile, inputFilename); err != nil {
+	if err = copyOverData(outputFile, inFilename); err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing data to output:", err.Error())
 		os.Exit(4)
 	}
@@ -46,9 +46,9 @@ func createPresFile(inputFilename string) {
 	}
 }
 
-func getPresOutput(inputFilename string) (*os.File, error) {
+func getPresOutput(inFilename string) (*os.File, error) {
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		outputFilename := fmt.Sprint(inputFilename, ".pres")
+		outputFilename := fmt.Sprint(inFilename, ".pres")
 		return os.Create(outputFilename)
 	}
 	return os.Stdout, nil
@@ -62,8 +62,8 @@ func getShardsHashers() []hash.Hash32 {
 	return hashers
 }
 
-func makeParityFilesAndCalculateHashes(inputFilename string, shardHashers []hash.Hash32) ([]string, error) {
-	dataInputs, err := getDataInputs(inputFilename)
+func makeParityFilesAndCalculateHashes(inFilename string, shardHashers []hash.Hash32) ([]string, error) {
+	dataInputs, err := getDataInputs(inFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -96,9 +96,9 @@ func makeParityFilesAndCalculateHashes(inputFilename string, shardHashers []hash
 	return parityFilenames, nil
 }
 
-func writeHeader(inputFilename string, outputFile *os.File, hashers []hash.Hash32) error {
+func writeHeader(inFilename string, outputFile *os.File, hashers []hash.Hash32) error {
 	// FIXME: Do I really have to open the file again?
-	inputFile, err := os.Open(inputFilename)
+	inputFile, err := os.Open(inFilename)
 	if err != nil {
 		return err
 	}
@@ -144,12 +144,12 @@ func copyOverData(destFile *os.File, srcFilenames ...string) error {
 	return nil
 }
 
-func getDataInputs(inputFilename string) ([]*os.File, error) {
+func getDataInputs(inFilename string) ([]*os.File, error) {
 	var err error
 	var shardSize int64
 	inputs := make([]*os.File, dataShardCnt)
 	for i := range inputs {
-		if inputs[i], err = os.Open(inputFilename); err != nil {
+		if inputs[i], err = os.Open(inFilename); err != nil {
 			return nil, err
 		}
 		if _, err = inputs[i].Seek(int64(i)*shardSize, 0); err != nil {

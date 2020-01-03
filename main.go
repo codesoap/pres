@@ -23,14 +23,14 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Provide one input file as the second argument")
 		os.Exit(1)
 	}
-	inputFilename := os.Args[2]
+	inFilename := os.Args[2]
 	switch command {
 	case create:
-		createPresFile(inputFilename)
+		createPresFile(inFilename)
 	case verify:
-		verifyPresFile(inputFilename)
+		verifyPresFile(inFilename)
 	case restore:
-		restoreData(inputFilename)
+		restoreData(inFilename)
 	}
 }
 

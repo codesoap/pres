@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-func verifyPresFile(inputFilename string) {
-	confs, err := readConfs(inputFilename)
+func verifyPresFile(inFilename string) {
+	confs, err := readConfs(inFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error reading conf sections:", err.Error())
 		os.Exit(2)
@@ -30,7 +30,7 @@ func verifyPresFile(inputFilename string) {
 		fmt.Fprintln(os.Stderr, "All conf blocks are intact.")
 	}
 	conf := correctConfs[0]
-	generatedHashes, err := generateHashes(inputFilename, conf)
+	generatedHashes, err := generateHashes(inFilename, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error calculating hashes:", err.Error())
 		os.Exit(3)
@@ -56,9 +56,9 @@ func verifyPresFile(inputFilename string) {
 	}
 }
 
-func readConfs(inputFilename string) ([]conf, error) {
+func readConfs(inFilename string) ([]conf, error) {
 	confs := make([]conf, 3)
-	inputFile, err := os.Open(inputFilename)
+	inputFile, err := os.Open(inFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +138,8 @@ func getCorrectConfs(confs []conf) []conf {
 	return correctConfs
 }
 
-func generateHashes(inputFilename string, conf conf) ([]string, error) {
-	readers, files, err := getShardReaders(inputFilename, conf)
+func generateHashes(inFilename string, conf conf) ([]string, error) {
+	readers, files, err := getShardReaders(inFilename, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +164,8 @@ func countMatchingHashes(generatedHashes, storedHashes []string) uint8 {
 	return matchingHashes
 }
 
-func getShardReaders(inputFilename string, conf conf) ([]io.Reader, []*os.File, error) {
-	headerSize, err := getBinaryOffset(inputFilename)
+func getShardReaders(inFilename string, conf conf) ([]io.Reader, []*os.File, error) {
+	headerSize, err := getBinaryOffset(inFilename)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -173,7 +173,7 @@ func getShardReaders(inputFilename string, conf conf) ([]io.Reader, []*os.File, 
 	files := make([]*os.File, conf.dataShardCnt+conf.parityShardCnt)
 	readers := make([]io.Reader, conf.dataShardCnt+conf.parityShardCnt)
 	for i := 0; i < int(conf.dataShardCnt+conf.parityShardCnt); i += 1 {
-		files[i], err = os.Open(inputFilename)
+		files[i], err = os.Open(inFilename)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -199,8 +199,8 @@ func getShardReaders(inputFilename string, conf conf) ([]io.Reader, []*os.File, 
 
 // getBinaryOffset determines how many bytes are at the beginning of the
 // input file, that are not part of the data and parity information.
-func getBinaryOffset(inputFilename string) (int64, error) {
-	inputFile, err := os.Open(inputFilename)
+func getBinaryOffset(inFilename string) (int64, error) {
+	inputFile, err := os.Open(inFilename)
 	if err != nil {
 		return -1, err
 	}

@@ -16,14 +16,14 @@ const (
 	damaged = false
 )
 
-func restoreData(inputFilename string) {
+func restoreData(inFilename string) {
 	fmt.Fprintln(os.Stderr, "Checking shards for damage.")
-	conf, err := getConf(inputFilename)
+	conf, err := getConf(inFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error reading *.pres file:", err.Error())
 		os.Exit(2)
 	}
-	shardStates, err := getShardStates(inputFilename, conf)
+	shardStates, err := getShardStates(inFilename, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error reading *.pres file:", err.Error())
 		os.Exit(2)
@@ -35,13 +35,13 @@ func restoreData(inputFilename string) {
 		os.Exit(3)
 	}
 	fmt.Fprintln(os.Stderr, "Verifying restored data.")
-	err = verify2(inputFilename, restoredShards, conf)
+	err = verify2(inFilename, restoredShards, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error verifying restored shards:", err.Error())
 		os.Exit(4)
 	}
 	fmt.Fprintln(os.Stderr, "Writing output.")
-	err = writeOutput(inputFilename, restoredShards, conf)
+	err = writeOutput(inFilename, restoredShards, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing output:", err.Error())
 		os.Exit(5)
@@ -52,8 +52,8 @@ func restoreData(inputFilename string) {
 	}
 }
 
-func getConf(inputFilename string) (conf, error) {
-	confs, err := readConfs(inputFilename)
+func getConf(inFilename string) (conf, error) {
+	confs, err := readConfs(inFilename)
 	if err != nil {
 		var dummy conf
 		return dummy, err
@@ -66,8 +66,8 @@ func getConf(inputFilename string) (conf, error) {
 	return correctConfs[0], nil
 }
 
-func getShardStates(inputFilename string, conf conf) ([]bool, error) {
-	generatedHashes, err := generateHashes(inputFilename, conf)
+func getShardStates(inFilename string, conf conf) ([]bool, error) {
+	generatedHashes, err := generateHashes(inFilename, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +116,8 @@ func restore2(inFilename string, shardStates []bool, conf conf) ([]string, error
 	return outFilenames, err
 }
 
-func verify2(inputFilename string, restoredShards []string, conf conf) error {
-	readers, files, err := getRestoredReaders(inputFilename, restoredShards, conf)
+func verify2(inFilename string, restoredShards []string, conf conf) error {
+	readers, files, err := getRestoredReaders(inFilename, restoredShards, conf)
 	if err != nil {
 		return err
 	}
@@ -139,8 +139,8 @@ func verify2(inputFilename string, restoredShards []string, conf conf) error {
 	return err
 }
 
-func writeOutput(inputFilename string, restoredShards []string, conf conf) error {
-	readers, files, err := getRestoredReaders(inputFilename, restoredShards, conf)
+func writeOutput(inFilename string, restoredShards []string, conf conf) error {
+	readers, files, err := getRestoredReaders(inFilename, restoredShards, conf)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func writeOutput(inputFilename string, restoredShards []string, conf conf) error
 	if err != nil {
 		return err
 	}
-	output, err := getDataOutput(inputFilename)
+	output, err := getDataOutput(inFilename)
 	if err != nil {
 		return err
 	}
@@ -164,8 +164,8 @@ func writeOutput(inputFilename string, restoredShards []string, conf conf) error
 	return enc.Join(writer, readers, conf.dataLen)
 }
 
-func getRestoredReaders(inputFilename string, restoredShards []string, conf conf) ([]io.Reader, []*os.File, error) {
-	readers, files, err := getShardReaders(inputFilename, conf)
+func getRestoredReaders(inFilename string, restoredShards []string, conf conf) ([]io.Reader, []*os.File, error) {
+	readers, files, err := getShardReaders(inFilename, conf)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,12 +184,12 @@ func getRestoredReaders(inputFilename string, restoredShards []string, conf conf
 	return readers, files, nil
 }
 
-func getDataOutput(inputFilename string) (*os.File, error) {
+func getDataOutput(inFilename string) (*os.File, error) {
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		if !strings.HasSuffix(inputFilename, ".pres") {
+		if !strings.HasSuffix(inFilename, ".pres") {
 			return nil, errors.New("input file does not have .pres suffix")
 		}
-		outputFilename := strings.TrimSuffix(inputFilename, ".pres")
+		outputFilename := strings.TrimSuffix(inFilename, ".pres")
 		return os.Create(outputFilename)
 	}
 	return os.Stdout, nil
