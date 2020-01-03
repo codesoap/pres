@@ -12,6 +12,7 @@ $ pres create my_data.foo
 $ pres create my_data.foo > my_outfile.foo.pres
 $ pres verify my_data.foo.pres
 $ pres restore my_data.foo.pres
+$ pres restore my_data.foo.pres > my_outfile.foo
 ```
 
 # Installation

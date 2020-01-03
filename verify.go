@@ -139,29 +139,15 @@ func getCorrectConfs(confs []conf) []conf {
 }
 
 func generateHashes(inputFilename string, conf conf) ([]string, error) {
-	headerSize, err := getBinaryOffset(inputFilename)
+	readers, files, err := getShardReaders(inputFilename, conf)
 	if err != nil {
 		return nil, err
 	}
-	shardSize := calculateShardSize(conf.dataLen, conf.dataShardCnt)
-	readers := make([]io.Reader, conf.dataShardCnt+conf.parityShardCnt)
-	for i := 0; i < int(conf.dataShardCnt+conf.parityShardCnt); i += 1 {
-		inputFile, err := os.Open(inputFilename)
-		if err != nil {
-			return nil, err
+	defer func() {
+		for _, file := range files {
+			file.Close()
 		}
-		defer inputFile.Close()
-		var offset int64 = headerSize
-		if i < int(conf.dataShardCnt) {
-			offset += int64(i) * shardSize
-		} else {
-			offset += conf.dataLen + int64(i-int(conf.dataShardCnt))*shardSize
-		}
-		if _, err = inputFile.Seek(offset, 0); err != nil {
-			return nil, err
-		}
-		readers[i] = inputFile
-	}
+	}()
 	return generateHashesFromReaders(readers, conf)
 }
 
@@ -176,6 +162,39 @@ func countMatchingHashes(generatedHashes, storedHashes []string) uint8 {
 		}
 	}
 	return matchingHashes
+}
+
+func getShardReaders(inputFilename string, conf conf) ([]io.Reader, []*os.File, error) {
+	headerSize, err := getBinaryOffset(inputFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+	shardSize := calculateShardSize(conf.dataLen, conf.dataShardCnt)
+	files := make([]*os.File, conf.dataShardCnt+conf.parityShardCnt)
+	readers := make([]io.Reader, conf.dataShardCnt+conf.parityShardCnt)
+	for i := 0; i < int(conf.dataShardCnt+conf.parityShardCnt); i += 1 {
+		files[i], err = os.Open(inputFilename)
+		if err != nil {
+			return nil, nil, err
+		}
+		var offset int64 = headerSize
+		if i < int(conf.dataShardCnt) {
+			offset += int64(i) * shardSize
+		} else {
+			offset += conf.dataLen + int64(i-int(conf.dataShardCnt))*shardSize
+		}
+		if _, err = files[i].Seek(offset, 0); err != nil {
+			return nil, nil, err
+		}
+		readers[i] = files[i]
+		if i != int(conf.dataShardCnt-1) {
+			readers[i] = io.LimitReader(readers[i], shardSize)
+		} else {
+			size := conf.dataLen - (int64(i) * shardSize)
+			readers[i] = io.LimitReader(readers[i], size)
+		}
+	}
+	return readers, files, nil
 }
 
 // getBinaryOffset determines how many bytes are at the beginning of the
@@ -203,16 +222,9 @@ func getBinaryOffset(inputFilename string) (int64, error) {
 }
 
 func generateHashesFromReaders(readers []io.Reader, conf conf) ([]string, error) {
-	shardSize := calculateShardSize(conf.dataLen, conf.dataShardCnt)
 	hashes := make([]string, len(readers))
 	hasher := crc32.New(crc32.MakeTable(crc32.Castagnoli))
 	for i := range readers {
-		if i != int(conf.dataShardCnt-1) {
-			readers[i] = io.LimitReader(readers[i], shardSize)
-		} else {
-			size := conf.dataLen - (int64(i) * shardSize)
-			readers[i] = io.LimitReader(readers[i], size)
-		}
 		if _, err := bufio.NewReader(readers[i]).WriteTo(hasher); err != nil {
 			return nil, err
 		}

@@ -9,11 +9,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 func createPresFile(inputFilename string) {
-	outputFile, err := getOutputFile(inputFilename)
+	outputFile, err := getPresOutput(inputFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error opening output:", err.Error())
 		os.Exit(1)
@@ -47,7 +46,7 @@ func createPresFile(inputFilename string) {
 	}
 }
 
-func getOutputFile(inputFilename string) (*os.File, error) {
+func getPresOutput(inputFilename string) (*os.File, error) {
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		outputFilename := fmt.Sprint(inputFilename, ".pres")
 		return os.Create(outputFilename)
@@ -145,15 +144,6 @@ func copyOverData(destFile *os.File, srcFilenames ...string) error {
 	return nil
 }
 
-func removeFiles(filenames []string) error {
-	for _, filename := range filenames {
-		if err := os.Remove(filename); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func getDataInputs(inputFilename string) ([]*os.File, error) {
 	var err error
 	var shardSize int64
@@ -190,10 +180,8 @@ func toDataInputReaders(dataInputs []*os.File, shardHashers []hash.Hash32) ([]io
 		inputReaders[i] = io.LimitReader(inputReaders[i], shardSize)
 		inputReaders[i] = io.TeeReader(inputReaders[i], shardHashers[i])
 	}
-	for i := 0; i < int((shardSize*dataShardCnt)-dataLen); i += 1 {
-		r := strings.NewReader("0")
-		inputReaders[dataShardCnt-1] = io.MultiReader(inputReaders[dataShardCnt-1], r)
-	}
+	i := dataShardCnt - 1
+	inputReaders[i] = fillLastDataReader(inputReaders[i], dataShardCnt, dataLen)
 	return inputReaders, nil
 }
 

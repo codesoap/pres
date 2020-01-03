@@ -29,6 +29,8 @@ func main() {
 		createPresFile(inputFilename)
 	case verify:
 		verifyPresFile(inputFilename)
+	case restore:
+		restoreData(inputFilename)
 	}
 }
 
@@ -45,6 +47,10 @@ func getCommand() (int, error) {
 		fallthrough
 	case "verify":
 		return verify, nil
+	case "r":
+		fallthrough
+	case "restore":
+		return restore, nil
 	default:
 		return -1, errors.New(fmt.Sprint("unknown command ", os.Args[1]))
 	}
