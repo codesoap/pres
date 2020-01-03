@@ -67,6 +67,7 @@ func readConfs(inFilename string) ([]conf, error) {
 	var confIndex int = -1
 	var line string
 	reBinary := regexp.MustCompile(`ary\]|\[bin`)
+	reShard := regexp.MustCompile(`shard_[0-9]*_crc32c=.*`)
 	for err = nil; err == nil; line, err = inputReader.ReadString('\n') {
 		line = strings.TrimSpace(line)
 		switch line {
@@ -100,7 +101,7 @@ func readConfs(inFilename string) ([]conf, error) {
 			confs[confIndex].parityShardCnt = uint8(x)
 			shardCnt := confs[confIndex].dataShardCnt + uint8(x)
 			confs[confIndex].shardCRC32Cs = make([]string, shardCnt)
-		case strings.HasPrefix(line, "shard_"):
+		case reShard.Match([]byte(line)):
 			s := strings.SplitAfterN(line, "_", 3)[1]
 			s = strings.Trim(s, "_")
 			x, _ := strconv.ParseUint(s, 10, 8)
