@@ -67,15 +67,57 @@ information, that can be restored once corrupted.
   concatenating the now repaired data shards.
    
 # Shortcomings
-- The input file should at least contain 10_000 bytes of data (amount of
-  data shards squared).
-- Added or lost data is not handled. Few bytes gone missing or being
-  added may be handled in the future.
-- No in-place repair of `*.pres` files.
-- Although the data and parity shards can take at least three bit-flips
-  without becoming unrestorable, two bit-flips can already destroy the
-  header.
-- Changes in the filename or other meta-data are not prevented.
+1. The input file should at least contain 10_000 bytes of data (amount of
+   data shards squared).
+2. Added or lost data is not handled. Few bytes gone missing or being
+   added may be handled in the future.
+3. No in-place repair of `*.pres` files.
+4. Although the data and parity shards can take at least three bit-flips
+   without becoming unrestorable, two bit-flips can already destroy the
+   header.
+5. Changes in the filename or other meta-data are not prevented.
+
+# Comparison to similar software
+## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
+`blockyarchive` improves on all listed shortcomings of `pres`, except
+2., but trades performance and filesize for that. It is probably better
+suited if you want to recover from more extreme damage, like filesystem
+failure or large amounts of rotten bits.
+
+Performance with 1GiB of random data:
+```console
+$ time blkar encode 1GiB.data
+[...]
+real    0m30,693s
+user    0m37,792s
+sys     0m21,894s
+
+$ time blkar check 1GiB.data.ecsbx
+[...]
+real    0m8,126s
+user    0m6,703s
+sys     0m1,024s
+
+$ time pres create 1GiB.data
+[...]
+real    0m10,476s
+user    0m5,153s
+sys     0m7,542s
+
+$ time pres verify 1GiB.data.pres
+[...]
+real    0m3,266s
+user    0m2,102s
+sys     0m1,244s
+```
+
+Output filesizes (`blkar` adds ~23.9%, `pres` adds ~3.0%):
+```console
+$ du 1GiB.data*
+1048580 1GiB.data
+1298956 1GiB.data.ecsbx
+1080048 1GiB.data.pres
+```
 
 # File Format Example
 ```
