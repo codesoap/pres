@@ -78,26 +78,17 @@ information, that can be restored once corrupted.
 5. Changes in the filename or other meta-data are not prevented.
 
 # Comparison to similar software
-## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
-`blockyarchive` improves on all listed shortcomings of `pres`, except
-2., but trades performance and filesize for that. It is probably better
-suited if you want to recover from more extreme damage, like filesystem
-failure or large amounts of rotten bits.
+The intended use case of `pres` is to prevent a few bit-flips from
+corrupting a backup file. It is easy to use, faster than it's
+competitors and produces comparatively small output files (when using
+default configurations).
 
-Performance with 1GiB of random data:
+Due to the simplicity of the `*.pres` file format, it might even be
+possible to manually recover from massive damage to the header info,
+when automatic reconstruction fails.
+
+With 1GiB of random data, I got these timings on my machine:
 ```console
-$ time blkar encode 1GiB.data
-[...]
-real    0m30,693s
-user    0m37,792s
-sys     0m21,894s
-
-$ time blkar check 1GiB.data.ecsbx
-[...]
-real    0m8,126s
-user    0m6,703s
-sys     0m1,024s
-
 $ time pres create 1GiB.data
 [...]
 real    0m10,476s
@@ -111,12 +102,67 @@ user    0m2,102s
 sys     0m1,244s
 ```
 
-Output filesizes (`blkar` adds ~23.9%, `pres` adds ~3.0%):
+The resulting file will be ~3.0% larger than the original file.
+
+## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
+`blkar` improves on all listed shortcomings of `pres`, except 2., but
+trades performance and filesize for that. It is probably better suited
+if you want to recover from more extreme damage, like filesystem failure
+or large amounts of rotten bits.
+
+Performance (using the same amount of data and parity shards as `pres` does):
 ```console
-$ du 1GiB.data*
-1048580 1GiB.data
-1298956 1GiB.data.ecsbx
-1080048 1GiB.data.pres
+$ time blkar encode --sbx-version 17 --rs-data 100 --rs-parity 3 1GiB.data
+[...]
+real    0m32,864s
+user    0m39,948s
+sys     0m23,268s
+
+$ time blkar check 1GiB.data.ecsbx
+[...]
+real    0m6,920s
+user    0m5,701s
+sys     0m0,930s
+```
+
+The resulting file is ~6.3% larger than the original file. It is
+significantly larger than the output of `pres`, because `blkar` splits
+the input into blocks, which are then further split into shards for
+parity calculation. This makes the `*.ecsbx` more resistant to randomly
+spread bit-flips, but less resistant to large patches of bit-flips, if I
+understand the design correctly. The filesize can be reduced to be ~3.4%
+larger than the original file by using the non-default
+`--sbx-version 19`.
+
+## [par2](https://github.com/Parchive/par2cmdline/)
+`par2` generates multiple output files, which must be used in
+combination with the original file to verify integrity or repair the
+data. This gives it (theoretically) a big performance benefit over
+`pres`, because it saves a lot of disk I/O. The drawback of this is,
+that you have to deal with multiple files.
+
+`par2` seems to cope with point 1., 4. and even 2. of the shortcomings
+of `pres`.
+
+On the downside `par2` does apparently not inform you about damaged
+recovery files, as long as there is still at least one undamaged
+recovery file left. This means that you could already be just two
+bit-flips away from loosing your data, without `par2` notifying you
+about the occurred damage.
+
+Performance (using the same amount of data and parity shards as `pres` does):
+```console
+$ time par2 create -b100 -r3 1GiB.data
+[...]
+real    0m23,305s
+user    0m23,893s
+sys     0m2,453s
+
+$ time par2 verify 1GiB.data
+[...]
+real    0m23,799s
+user    0m27,722s
+sys     0m1,086s
 ```
 
 # File Format Example
