@@ -77,15 +77,15 @@ With 1GiB of random data, I got these timings on my machine:
 ```console
 $ time pres create 1GiB.data
 [...]
-real    0m10,476s
-user    0m5,153s
-sys     0m7,542s
+real    0m5,025s
+user    0m4,772s
+sys     0m1,785s
 
 $ time pres verify 1GiB.data.pres
 [...]
-real    0m3,266s
-user    0m2,102s
-sys     0m1,244s
+real    0m3,120s
+user    0m2,157s
+sys     0m1,034s
 ```
 
 The resulting file will be ~3.0% larger than the original file.
