@@ -20,6 +20,10 @@ func createPresFile(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error checking input filesize:", err.Error())
 		os.Exit(1)
 	}
+	if conf.dataLen == 0 {
+		fmt.Fprintln(os.Stderr, "The input file is empty.")
+		os.Exit(1)
+	}
 	conf.dataShardCnt = reduceShardCntIfNecessary(conf)
 
 	hashers := getShardsHashers(conf)
