@@ -9,7 +9,8 @@ to improve the longevity of backups.
 $ # Create my_data.foo.pres:
 $ pres create my_data.foo
 Calculating parity information and checksums.
-Writing output.
+Appending output to 'my_data.foo'.
+Renaming 'my_data.foo' to 'my_data.foo.pres'.
 
 $ # From time to time you should check if your files are damaged:
 $ pres verify my_data.foo.pres
@@ -23,22 +24,11 @@ $ pres restore my_data.foo.pres
 Checking shards for damage.
 Restoring damaged shards.
 Verifying restored data.
-Writing output.
+Writing 'my_data.foo'.
 $ pres create my_data.foo
 Calculating parity information and checksums.
-Writing output.
-```
-
-Advanced use cases:
-```console
-$ # For improved performance you might want to write the output to a
-$ # different disk:
-$ pres create my_data.foo > /media/disk2/my_data.foo.pres
-Calculating parity information and checksums.
-Writing output.
-
-$ # In the same manner, you can redirect the output when restoring:
-$ pres restore my_data.foo.pres > /media/disk2/my_data.foo
+Appending output to 'my_data.foo'.
+Renaming 'my_data.foo' to 'my_data.foo.pres'.
 ```
 
 # Installation
@@ -74,18 +64,14 @@ information, that can be restored once corrupted.
 3. No in-place repair of `*.pres` files.
 4. Although the data and parity shards can take at least three bit-flips
    without becoming unrestorable, two bit-flips can already destroy the
-   header.
+   metadata.
 5. Changes in the filename or other meta-data are not prevented.
 
 # Comparison to similar software
 The intended use case of `pres` is to prevent a few bit-flips from
-corrupting a backup file. It is easy to use, faster than it's
+corrupting a backup file. It is easy to use, way faster than it's
 competitors and produces comparatively small output files (when using
 default configurations).
-
-Due to the simplicity of the `*.pres` file format, it might even be
-possible to manually recover from massive damage to the header info,
-when automatic reconstruction fails.
 
 With 1GiB of random data, I got these timings on my machine:
 ```console
@@ -137,9 +123,8 @@ larger than the original file by using the non-default
 ## [par2](https://github.com/Parchive/par2cmdline/)
 `par2` generates multiple output files, which must be used in
 combination with the original file to verify integrity or repair the
-data. This gives it (theoretically) a big performance benefit over
-`pres`, because it saves a lot of disk I/O. The drawback of this is,
-that you have to deal with multiple files.
+data. This means you always have to deal with multiple files when
+verifying the datas integrity or restoring data.
 
 `par2` seems to cope with point 1., 4. and even 2. of the shortcomings
 of `pres`.
@@ -167,6 +152,8 @@ sys     0m1,086s
 
 # File Format Example
 ```
+<binary-data><binary-parity-information>
+
 [conf]
 version=1
 data_len=997
@@ -205,7 +192,4 @@ shard_4_crc32c=1400629101
 shard_5_crc32c=2293045559
 shard_6_crc32c=563834295
 shard_7_crc32c=3265204826
-
-[binary]
-<binary-data><binary-parity-information>
 ```
