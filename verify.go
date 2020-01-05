@@ -35,10 +35,10 @@ func verifyPresFile(inFilename string) {
 		os.Exit(3)
 	}
 	matchingHashes := countMatchingHashes(generatedHashes, conf.shardCRC32Cs)
-	var shardCnt uint8 = dataShardCnt + parityShardCnt
+	var shardCnt uint8 = conf.dataShardCnt + conf.parityShardCnt
 	fmt.Fprintln(os.Stderr, matchingHashes, "out of", shardCnt,
 		"shards are intact.")
-	if matchingHashes < dataShardCnt {
+	if matchingHashes < conf.dataShardCnt {
 		fmt.Println("Restoration impossible: not enought shards are intact.")
 		os.Exit(4)
 	} else if matchingHashes < shardCnt {

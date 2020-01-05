@@ -5,28 +5,12 @@ import (
 	"os"
 )
 
-// Constants for tuning the behaviour of the program.
-const (
-	dataShardCnt   = 100
-	parityShardCnt = 3
-)
-
 type conf struct {
 	version        string
 	dataLen        int64
 	dataShardCnt   uint8
 	parityShardCnt uint8
 	shardCRC32Cs   []string
-}
-
-func newConf(version string, dataLen int64, shardsHashes []string) conf {
-	var conf conf
-	conf.version = version
-	conf.dataLen = dataLen
-	conf.dataShardCnt = dataShardCnt
-	conf.parityShardCnt = parityShardCnt
-	conf.shardCRC32Cs = shardsHashes
-	return conf
 }
 
 func writeConf(outputFile *os.File, conf conf) error {

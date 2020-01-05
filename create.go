@@ -11,19 +11,24 @@ import (
 )
 
 func createPresFile(inFilename string) {
-	dataLen, err := getFilesize(inFilename)
+	var conf conf
+	conf.dataShardCnt = 100
+	conf.parityShardCnt = 3
+
+	var err error
+	conf.dataLen, err = getFilesize(inFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error checking input filesize:", err.Error())
 		os.Exit(1)
-	} else if dataLen < int64(dataShardCnt)*int64(dataShardCnt) {
+	} else if conf.dataLen < int64(conf.dataShardCnt)*int64(conf.dataShardCnt) {
 		fmt.Fprintln(os.Stderr, "The input file must contain at least",
-			int(dataShardCnt)*int(dataShardCnt), "bytes.")
+			int(conf.dataShardCnt)*int(conf.dataShardCnt), "bytes.")
 		os.Exit(1)
 	}
 
-	hashers := getShardsHashers()
+	hashers := getShardsHashers(conf)
 	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums.")
-	parityFilenames, err := makeParityFilesAndCalculateHashes(inFilename, hashers)
+	parityFilenames, err := makeParityFilesAndCalculateHashes(inFilename, conf, hashers)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error creating parity files:", err.Error())
 		os.Exit(2)
@@ -33,7 +38,8 @@ func createPresFile(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error writing parity to output:", err.Error())
 		os.Exit(3)
 	}
-	if err := writeMetadata(inFilename, dataLen, hashers); err != nil {
+	err = writeMetadata(inFilename, conf, hashers)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing metadata:", err.Error())
 		os.Exit(3)
 	}
@@ -49,29 +55,30 @@ func createPresFile(inFilename string) {
 	}
 }
 
-func getShardsHashers() []hash.Hash32 {
-	hashers := make([]hash.Hash32, dataShardCnt+parityShardCnt)
-	for i := 0; i < dataShardCnt+parityShardCnt; i += 1 {
+func getShardsHashers(conf conf) []hash.Hash32 {
+	hashers := make([]hash.Hash32, conf.dataShardCnt+conf.parityShardCnt)
+	for i := 0; i < int(conf.dataShardCnt+conf.parityShardCnt); i += 1 {
 		hashers[i] = crc32.New(crc32.MakeTable(crc32.Castagnoli))
 	}
 	return hashers
 }
 
-func makeParityFilesAndCalculateHashes(inFilename string, shardHashers []hash.Hash32) ([]string, error) {
-	dataInputs, err := getDataInputs(inFilename)
+func makeParityFilesAndCalculateHashes(inFilename string, conf conf, hashers []hash.Hash32) ([]string, error) {
+	dataInputs, err := getDataInputs(inFilename, conf.dataShardCnt)
 	if err != nil {
 		return nil, err
 	}
-	dataInputReaders, err := toDataInputReaders(dataInputs, shardHashers)
+	dataInputReaders, err := toDataInputReaders(dataInputs, conf.dataShardCnt, hashers)
 	if err != nil {
 		return nil, err
 	}
-	parityOutputs, err := getParityOutputs()
+	parityOutputs, err := getParityOutputs(conf.parityShardCnt)
 	if err != nil {
 		return nil, err
 	}
-	parityOutputWriters := getParityOutputWriters(parityOutputs, shardHashers)
-	if err = writeParityFiles(dataInputReaders, parityOutputWriters); err != nil {
+	parityOutputWriters := getParityOutputWriters(parityOutputs, conf, hashers)
+	err = writeParityFiles(dataInputReaders, conf, parityOutputWriters)
+	if err != nil {
 		return nil, err
 	}
 	for i := range dataInputs {
@@ -80,7 +87,7 @@ func makeParityFilesAndCalculateHashes(inFilename string, shardHashers []hash.Ha
 			return nil, err
 		}
 	}
-	parityFilenames := make([]string, parityShardCnt)
+	parityFilenames := make([]string, conf.parityShardCnt)
 	for i, parityOutput := range parityOutputs {
 		parityFilenames[i] = parityOutput.Name()
 		err = parityOutput.Close()
@@ -110,17 +117,18 @@ func copyOverData(destFilename string, srcFilenames ...string) error {
 	return nil
 }
 
-func writeMetadata(inFilename string, dataLen int64, hashers []hash.Hash32) error {
+func writeMetadata(inFilename string, conf conf, hashers []hash.Hash32) error {
 	destFile, err := os.OpenFile(inFilename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer destFile.Close()
-	shardsHashes := make([]string, dataShardCnt+parityShardCnt)
+	shardsHashes := make([]string, conf.dataShardCnt+conf.parityShardCnt)
 	for i := range hashers {
 		shardsHashes[i] = fmt.Sprint(hashers[i].Sum32())
 	}
-	conf := newConf("1", dataLen, shardsHashes)
+	conf.version = "1"
+	conf.shardCRC32Cs = shardsHashes
 	if _, err := fmt.Fprintln(destFile, "\n\n[conf]"); err != nil {
 		return err
 	}
@@ -139,7 +147,7 @@ func writeMetadata(inFilename string, dataLen int64, hashers []hash.Hash32) erro
 	return writeConf(destFile, conf)
 }
 
-func getDataInputs(inFilename string) ([]*os.File, error) {
+func getDataInputs(inFilename string, dataShardCnt uint8) ([]*os.File, error) {
 	var err error
 	var shardSize int64
 	inputs := make([]*os.File, dataShardCnt)
@@ -151,7 +159,7 @@ func getDataInputs(inFilename string) ([]*os.File, error) {
 			return nil, err
 		}
 		if i == 0 {
-			shardSize, err = getShardSize(inputs[0])
+			shardSize, err = getShardSize(inputs[0], dataShardCnt)
 			if err != nil {
 				return nil, err
 			}
@@ -160,8 +168,8 @@ func getDataInputs(inFilename string) ([]*os.File, error) {
 	return inputs, nil
 }
 
-func toDataInputReaders(dataInputs []*os.File, shardHashers []hash.Hash32) ([]io.Reader, error) {
-	shardSize, err := getShardSize(dataInputs[0])
+func toDataInputReaders(dataInputs []*os.File, dataShardCnt uint8, shardHashers []hash.Hash32) ([]io.Reader, error) {
+	shardSize, err := getShardSize(dataInputs[0], dataShardCnt)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +188,7 @@ func toDataInputReaders(dataInputs []*os.File, shardHashers []hash.Hash32) ([]io
 	return inputReaders, nil
 }
 
-func getParityOutputs() ([]*os.File, error) {
+func getParityOutputs(parityShardCnt uint8) ([]*os.File, error) {
 	var err error
 	outputs := make([]*os.File, parityShardCnt)
 	for i := range outputs {
@@ -192,17 +200,18 @@ func getParityOutputs() ([]*os.File, error) {
 	return outputs, nil
 }
 
-func getParityOutputWriters(outputs []*os.File, shardHashers []hash.Hash32) []io.Writer {
-	writers := make([]io.Writer, parityShardCnt)
+func getParityOutputWriters(outputs []*os.File, conf conf, shardHashers []hash.Hash32) []io.Writer {
+	writers := make([]io.Writer, conf.parityShardCnt)
 	for i := range outputs {
 		writers[i] = outputs[i]
-		writers[i] = io.MultiWriter(writers[i], shardHashers[i+dataShardCnt])
+		j := i + int(conf.dataShardCnt)
+		writers[i] = io.MultiWriter(writers[i], shardHashers[j])
 	}
 	return writers
 }
 
-func writeParityFiles(dataInputReaders []io.Reader, parityOutputWriters []io.Writer) error {
-	enc, err := reedsolomon.NewStream(dataShardCnt, parityShardCnt)
+func writeParityFiles(dataInputReaders []io.Reader, conf conf, parityOutputWriters []io.Writer) error {
+	enc, err := reedsolomon.NewStream(int(conf.dataShardCnt), int(conf.parityShardCnt))
 	if err != nil {
 		return err
 	}
@@ -210,7 +219,7 @@ func writeParityFiles(dataInputReaders []io.Reader, parityOutputWriters []io.Wri
 	return err
 }
 
-func getShardSize(input *os.File) (int64, error) {
+func getShardSize(input *os.File, dataShardCnt uint8) (int64, error) {
 	fileSize, err := getDataLen(input)
 	if err != nil {
 		return -1, err
