@@ -72,7 +72,8 @@ corrupting a backup file. It is easy to use, way faster than it's
 alternatives and produces comparatively small output files (when using
 default configurations).
 
-With 1GiB of random data, I got these timings on my machine:
+With 1GiB of random data, I got these timings on my (old and slow)
+test-machine:
 ```console
 $ time pres create 1GiB.data
 [...]
