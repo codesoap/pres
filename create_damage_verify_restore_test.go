@@ -48,7 +48,7 @@ func TestCreateDamageVerifyRestore(t *testing.T) {
 }
 
 func createTestInput() (string, error) {
-	fileSize := 10e3 + (rand.Int() % 22e3)
+	fileSize := 1 + rand.Int()%32e3
 	content := make([]byte, fileSize)
 	_, err := rand.Read(content)
 	if err != nil {

@@ -57,15 +57,13 @@ information, that can be restored once corrupted.
   concatenating the now repaired data shards.
    
 # Shortcomings
-1. The input file should at least contain 10_000 bytes of data (amount of
-   data shards squared).
-2. Added or lost data is not handled. Few bytes gone missing or being
+1. Added or lost data is not handled. Few bytes gone missing or being
    added may be handled in the future.
-3. No in-place repair of `*.pres` files.
-4. Although the data and parity shards can take at least three bit-flips
+2. No in-place repair of `*.pres` files.
+3. Although the data and parity shards can take at least three bit-flips
    without becoming unrestorable, two bit-flips can already destroy the
    metadata.
-5. Changes in the filename or other meta-data are not prevented.
+4. Changes in the filename or other meta-data are not prevented.
 
 # Comparison to similar software
 The intended use case of `pres` is to prevent a few bit-flips from
@@ -91,7 +89,7 @@ sys     0m1,034s
 The resulting file will be ~3.0% larger than the original file.
 
 ## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
-`blkar` improves on all listed shortcomings of `pres`, except 2., but
+`blkar` improves on all listed shortcomings of `pres`, except 1., but
 trades performance and filesize for that. It is probably better suited
 if you want to recover from more extreme damage, like filesystem failure
 or large amounts of rotten bits.
@@ -126,8 +124,8 @@ combination with the original file to verify integrity or repair the
 data. This means you have to deal with multiple files when
 verifying the data's integrity or restoring data.
 
-`par2` seems to cope with point 1., 4. and even 2. of the shortcomings
-of `pres`.
+`par2` seems to cope with point 3. and even 1. of the shortcomings of
+`pres`.
 
 On the downside `par2` does apparently not explicitly inform you about
 damaged recovery files, as long as there is still at least one undamaged

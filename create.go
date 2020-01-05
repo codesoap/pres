@@ -14,17 +14,13 @@ func createPresFile(inFilename string) {
 	var conf conf
 	conf.dataShardCnt = 100
 	conf.parityShardCnt = 3
-
 	var err error
 	conf.dataLen, err = getFilesize(inFilename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error checking input filesize:", err.Error())
 		os.Exit(1)
-	} else if conf.dataLen < int64(conf.dataShardCnt)*int64(conf.dataShardCnt) {
-		fmt.Fprintln(os.Stderr, "The input file must contain at least",
-			int(conf.dataShardCnt)*int(conf.dataShardCnt), "bytes.")
-		os.Exit(1)
 	}
+	conf.dataShardCnt = reduceShardCntIfNecessary(conf)
 
 	hashers := getShardsHashers(conf)
 	fmt.Fprintln(os.Stderr, "Calculating parity information and checksums.")
@@ -53,6 +49,13 @@ func createPresFile(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error removing temporary files:", err.Error())
 		os.Exit(5)
 	}
+}
+
+// reduceShardCntIfNecessary returns a reduced dataShardCnt, if the
+// input file is too small for the previously set dataShardCnt.
+func reduceShardCntIfNecessary(conf conf) uint8 {
+	shardSize := calculateShardSize(conf.dataLen, conf.dataShardCnt)
+	return uint8((conf.dataLen + shardSize - 1) / shardSize)
 }
 
 func getShardsHashers(conf conf) []hash.Hash32 {
