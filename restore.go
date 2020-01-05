@@ -21,6 +21,10 @@ func restoreData(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error choosing output filename:", err.Error())
 		os.Exit(1)
 	}
+	if _, err := os.Stat(outFilename); !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "'%s' already exists.\n", outFilename)
+		os.Exit(1)
+	}
 	fmt.Fprintln(os.Stderr, "Checking shards for damage.")
 	conf, err := getConf(inFilename)
 	if err != nil {

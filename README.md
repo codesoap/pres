@@ -25,6 +25,7 @@ Checking shards for damage.
 Restoring damaged shards.
 Verifying restored data.
 Writing 'my_data.foo'.
+$ rm my_data.foo.pres
 $ pres create my_data.foo
 Calculating parity information and checksums.
 Appending output to 'my_data.foo'.

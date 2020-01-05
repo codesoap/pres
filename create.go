@@ -11,6 +11,11 @@ import (
 )
 
 func createPresFile(inFilename string) {
+	presFilename := fmt.Sprint(inFilename, ".pres")
+	if _, err := os.Stat(presFilename); !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "'%s' already exists.\n", presFilename)
+		os.Exit(1)
+	}
 	var conf conf
 	conf.dataShardCnt = 100
 	conf.parityShardCnt = 3
@@ -43,7 +48,6 @@ func createPresFile(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error writing metadata:", err.Error())
 		os.Exit(3)
 	}
-	presFilename := fmt.Sprint(inFilename, ".pres")
 	fmt.Fprintf(os.Stderr, "Renaming '%s' to '%s'.\n", inFilename, presFilename)
 	if err = os.Rename(inFilename, presFilename); err != nil {
 		fmt.Fprintln(os.Stderr, "Error renaming to *.pres:", err.Error())
