@@ -70,7 +70,7 @@ information, that can be restored once corrupted.
 # Comparison to similar software
 The intended use case of `pres` is to prevent a few bit-flips from
 corrupting a backup file. It is easy to use, way faster than it's
-competitors and produces comparatively small output files (when using
+alternatives and produces comparatively small output files (when using
 default configurations).
 
 With 1GiB of random data, I got these timings on my machine:
@@ -123,8 +123,8 @@ larger than the original file by using the non-default
 ## [par2](https://github.com/Parchive/par2cmdline/)
 `par2` generates multiple output files, which must be used in
 combination with the original file to verify integrity or repair the
-data. This means you always have to deal with multiple files when
-verifying the datas integrity or restoring data.
+data. This means you have to deal with multiple files when
+verifying the data's integrity or restoring data.
 
 `par2` seems to cope with point 1., 4. and even 2. of the shortcomings
 of `pres`.
@@ -152,7 +152,7 @@ sys     0m1,086s
 
 # File Format Example
 ```
-<binary-data><binary-parity-information>
+<data><parity-information>
 
 [conf]
 version=1
