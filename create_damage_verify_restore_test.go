@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -16,20 +17,19 @@ func TestCreateDamageVerifyRestore(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating tempfile: %s", err.Error())
 	}
+	origFilename := fmt.Sprint(dataFilename, ".orig")
+	if err = copyFile(dataFilename, origFilename); err != nil {
+		t.Errorf("Error copying file: %s", err.Error())
+	}
 	createPresFile(dataFilename)
 	presFilename := fmt.Sprint(dataFilename, ".pres")
-	srcFilename := fmt.Sprint(dataFilename, ".orig")
-	err = os.Rename(dataFilename, srcFilename)
-	if err != nil {
-		t.Errorf("Error renaming file: %s", err.Error())
-	}
 	err = damageOneByte(presFilename)
 	if err != nil {
 		t.Errorf("Error renaming file: %s", err.Error())
 	}
 	verifyPresFile(presFilename)
 	restoreData(presFilename)
-	eq, err := filesAreEqual(srcFilename, dataFilename)
+	eq, err := filesAreEqual(origFilename, dataFilename)
 	if err != nil {
 		t.Errorf("Error comparing files: %s", err.Error())
 	}
@@ -39,7 +39,7 @@ func TestCreateDamageVerifyRestore(t *testing.T) {
 	if err := os.Remove(dataFilename); err != nil {
 		t.Errorf("Error removing tempfile: %s", err.Error())
 	}
-	if err := os.Remove(srcFilename); err != nil {
+	if err := os.Remove(origFilename); err != nil {
 		t.Errorf("Error removing tempfile: %s", err.Error())
 	}
 	if err := os.Remove(presFilename); err != nil {
@@ -61,6 +61,21 @@ func createTestInput() (string, error) {
 	defer tempFile.Close()
 	_, err = tempFile.Write(content)
 	return tempFile.Name(), err
+}
+
+func copyFile(afn, bfn string) error {
+	a, err := os.Open(afn)
+	if err != nil {
+		return err
+	}
+	defer a.Close()
+	b, err := os.Create(bfn)
+	if err != nil {
+		return err
+	}
+	defer b.Close()
+	_, err = bufio.NewReader(a).WriteTo(b)
+	return err
 }
 
 func damageOneByte(filename string) error {

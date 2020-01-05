@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/klauspost/reedsolomon"
-	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +16,11 @@ const (
 )
 
 func restoreData(inFilename string) {
+	outFilename, err := getDataOutFilename(inFilename)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error choosing output filename:", err.Error())
+		os.Exit(1)
+	}
 	fmt.Fprintln(os.Stderr, "Checking shards for damage.")
 	conf, err := getConf(inFilename)
 	if err != nil {
@@ -40,7 +44,7 @@ func restoreData(inFilename string) {
 		fmt.Fprintln(os.Stderr, "Error verifying restored shards:", err.Error())
 		os.Exit(4)
 	}
-	fmt.Fprintln(os.Stderr, "Writing output.")
+	fmt.Fprintf(os.Stderr, "Writing '%s'.\n", outFilename)
 	err = writeOutput(inFilename, restoredShards, conf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error writing output:", err.Error())
@@ -155,12 +159,16 @@ func writeOutput(inFilename string, restoredShards []string, conf conf) error {
 	if err != nil {
 		return err
 	}
-	output, err := getDataOutput(inFilename)
+	outFilename, err := getDataOutFilename(inFilename)
 	if err != nil {
 		return err
 	}
-	defer output.Close()
-	var writer io.Writer = output
+	outFile, err := os.Create(outFilename)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+	var writer io.Writer = outFile
 	return enc.Join(writer, readers, conf.dataLen)
 }
 
@@ -184,13 +192,10 @@ func getRestoredReaders(inFilename string, restoredShards []string, conf conf) (
 	return readers, files, nil
 }
 
-func getDataOutput(inFilename string) (*os.File, error) {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		if !strings.HasSuffix(inFilename, ".pres") {
-			return nil, errors.New("input file does not have .pres suffix")
-		}
-		outputFilename := strings.TrimSuffix(inFilename, ".pres")
-		return os.Create(outputFilename)
+func getDataOutFilename(inFilename string) (string, error) {
+	if !strings.HasSuffix(inFilename, ".pres") {
+		return "", errors.New("input file does not have .pres suffix")
 	}
-	return os.Stdout, nil
+	outFilename := strings.TrimSuffix(inFilename, ".pres")
+	return outFilename, nil
 }

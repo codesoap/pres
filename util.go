@@ -13,6 +13,13 @@ func min(a, b int) int {
 	return b
 }
 
+func min64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func calculateShardSize(dataLen int64, dataShardCnt uint8) int64 {
 	shardSize := dataLen / int64(dataShardCnt)
 	if dataLen%int64(dataShardCnt) > 0 {
@@ -41,4 +48,12 @@ func fillLastDataReader(reader io.Reader, dataShardCnt uint8, dataLen int64) io.
 		reader = io.MultiReader(reader, r)
 	}
 	return reader
+}
+
+func getDataLen(input *os.File) (int64, error) {
+	stat, err := input.Stat()
+	if err != nil {
+		return -1, err
+	}
+	return stat.Size(), nil
 }

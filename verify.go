@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -58,16 +57,23 @@ func verifyPresFile(inFilename string) {
 
 func readConfs(inFilename string) ([]conf, error) {
 	confs := make([]conf, 3)
-	inputFile, err := os.Open(inFilename)
+	inFile, err := os.Open(inFilename)
 	if err != nil {
 		return nil, err
 	}
-	defer inputFile.Close()
-	inputReader := bufio.NewReader(inputFile)
+	defer inFile.Close()
+	fileSize, err := getDataLen(inFile)
+	if err != nil {
+		return nil, err
+	}
+	// Seek to a point where the metadata isn't far away (for performance):
+	if _, err = inFile.Seek(-min64(fileSize, 32e3), 2); err != nil {
+		return nil, err
+	}
+	inputReader := bufio.NewReader(inFile)
 	var confIndex int = -1
 	var line string
-	reBinary := regexp.MustCompile(`ary\]|\[bin`)
-	reShard := regexp.MustCompile(`shard_[0-9]*_crc32c=.*`)
+	reShard := regexp.MustCompile(`^shard_[0-9]*_crc32c=.*`)
 	for err = nil; err == nil; line, err = inputReader.ReadString('\n') {
 		line = strings.TrimSpace(line)
 		switch line {
@@ -82,7 +88,7 @@ func readConfs(inFilename string) ([]conf, error) {
 			continue
 		}
 		if confIndex < 0 {
-			// There were probably corrupted lines at the beginning of the file.
+			// There were probably damaged lines at the beginning of the metadata.
 			continue
 		}
 		switch {
@@ -112,14 +118,12 @@ func readConfs(inFilename string) ([]conf, error) {
 			}
 			s = strings.SplitAfterN(line, "=", 2)[1]
 			confs[confIndex].shardCRC32Cs[shardIndex] = s
-		case reBinary.Match([]byte(line)):
-			return confs, nil
 		}
 	}
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
-	return nil, errors.New("input file is incomplete")
+	return confs, nil
 }
 
 func getCorrectConfs(confs []conf) []conf {
@@ -166,23 +170,18 @@ func countMatchingHashes(generatedHashes, storedHashes []string) uint8 {
 }
 
 func getShardReaders(inFilename string, conf conf) ([]io.Reader, []*os.File, error) {
-	headerSize, err := getBinaryOffset(inFilename)
-	if err != nil {
-		return nil, nil, err
-	}
 	shardSize := calculateShardSize(conf.dataLen, conf.dataShardCnt)
 	files := make([]*os.File, conf.dataShardCnt+conf.parityShardCnt)
 	readers := make([]io.Reader, conf.dataShardCnt+conf.parityShardCnt)
 	for i := 0; i < int(conf.dataShardCnt+conf.parityShardCnt); i += 1 {
+		var err error
 		files[i], err = os.Open(inFilename)
 		if err != nil {
 			return nil, nil, err
 		}
-		var offset int64 = headerSize
-		if i < int(conf.dataShardCnt) {
-			offset += int64(i) * shardSize
-		} else {
-			offset += conf.dataLen + int64(i-int(conf.dataShardCnt))*shardSize
+		offset := int64(i) * shardSize
+		if i >= int(conf.dataShardCnt) {
+			offset = conf.dataLen + int64(i-int(conf.dataShardCnt))*shardSize
 		}
 		if _, err = files[i].Seek(offset, 0); err != nil {
 			return nil, nil, err
@@ -196,30 +195,6 @@ func getShardReaders(inFilename string, conf conf) ([]io.Reader, []*os.File, err
 		}
 	}
 	return readers, files, nil
-}
-
-// getBinaryOffset determines how many bytes are at the beginning of the
-// input file, that are not part of the data and parity information.
-func getBinaryOffset(inFilename string) (int64, error) {
-	inputFile, err := os.Open(inFilename)
-	if err != nil {
-		return -1, err
-	}
-	defer inputFile.Close()
-	reader := bufio.NewReader(inputFile)
-	reBin := regexp.MustCompile(`\[bin`)
-	reAry := regexp.MustCompile(`ary\]`)
-	pos := reBin.FindReaderIndex(reader)
-	if pos != nil {
-		return int64(pos[1] + 5), nil
-	}
-	inputFile.Seek(0, 0)
-	reader = bufio.NewReader(inputFile)
-	pos = reAry.FindReaderIndex(reader)
-	if pos == nil {
-		return -1, errors.New("could not find [binary] token")
-	}
-	return int64(pos[1] + 1), nil
 }
 
 func generateHashesFromReaders(readers []io.Reader, conf conf) ([]string, error) {
