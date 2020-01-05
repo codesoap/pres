@@ -17,6 +17,7 @@ func main() {
 	command, err := getCommand()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error when parsing command:", err.Error())
+		fmt.Fprintln(os.Stderr, "Usage: pres ([c]reate|[v]erify|[r]estore) <file>")
 		os.Exit(1)
 	}
 	if len(os.Args) != 3 {
