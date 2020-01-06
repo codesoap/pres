@@ -36,6 +36,9 @@ Renaming 'my_data.foo' to 'my_data.foo.pres'.
 `go get -v -u 'github.com/codesoap/pres'` will install the latest
 version of `pres` to `$HOME/go/bin/`.
 
+If you don't want to install from source, you can download binaries from
+the [releases page](https://github.com/codesoap/pres/releases).
+
 # How it Works
 `pres` calculates and stores parity information for the given file
 using [Solomon Reed error correction](https://en.wikipedia.org/wiki/Reed_Solomon).
