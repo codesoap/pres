@@ -112,8 +112,8 @@ verifying the data's integrity or restoring data.
 `par2` seems to cope with point 3. and even 1. of the shortcomings of
 `pres`.
 
-On the downside `par2` does apparently not explicitly inform you about
-damaged recovery files, as long as there is still at least one undamaged
+On the downside `par2` does not seem to inform you about damaged
+recovery files, as long as there is still at least one undamaged
 recovery or the metadata file left. This means that you could already be
 just one bit-flip away from loosing your data, without `par2` notifying
 you about the occurred damage.
