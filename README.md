@@ -39,44 +39,14 @@ version of `pres` to `$HOME/go/bin/`.
 If you don't want to install from source, you can download binaries from
 the [releases page](https://github.com/codesoap/pres/releases).
 
-# How it Works
-`pres` calculates and stores parity information for the given file
-using [Solomon Reed error correction](https://en.wikipedia.org/wiki/Reed_Solomon).
-
-Together with the original data and the newly generated parity
-information, hashes of the data and parity information are stored
-(multiple times, for fail safety) in a `*.pres` file. The hashes
-correlate to so called "shards", segments of the data and parity
-information, that can be restored once corrupted.
-
-## Verifying a files integrity:
-- Check if the copies of all shards' hashes match.
-- Check if the stored hashes of all shards match the ones
-  generated from the data and parity information.
-   
-## Restoring the data from a `*.pres` file
-- If there are at least as many shards intact, as there are data
-  shards, the corrupted shards can be restored.
-- Restoring the original data file is then simply a matter of
-  concatenating the now repaired data shards.
-   
-# Shortcomings
-1. Added or lost data is not handled. Few bytes gone missing or being
-   added may be handled in the future.
-2. No in-place repair of `*.pres` files.
-3. Although the data and parity shards can take at least three bit-flips
-   without becoming unrestorable, two bit-flips can already destroy the
-   metadata.
-4. Changes in the filename or other meta-data are not prevented.
-
-# Comparison to similar software
-The intended use case of `pres` is to prevent a few bit-flips from
-corrupting a backup file. It is easy to use, way faster than it's
-alternatives and produces comparatively small output files (when using
-default configurations).
+# Intended Use and Performance
+`pres` is intended to prevent a few bit-flips from corrupting a backup
+file. It is easy to use, way faster than it's alternatives and produces
+comparatively small output files (when using default configurations).
 
 With 1GiB of random data, I got these timings on my (old and slow)
-test-machine:
+test-machine; with a more modern CPU, performance is mainly limited by
+the speed of your HDD/SSD:
 ```console
 $ time pres create 1GiB.data
 [...]
@@ -93,6 +63,16 @@ sys     0m1,034s
 
 The resulting file will be ~3.0% larger than the original file.
 
+# Shortcomings
+1. Added or lost data is not handled. Few bytes gone missing or being
+   added may be handled in the future.
+2. No in-place repair of `*.pres` files.
+3. Although the data and parity shards can take at least three bit-flips
+   without becoming unrestorable, two bit-flips can already destroy the
+   metadata.
+4. Changes in the filename or other meta-data are not prevented.
+
+# Comparison to similar software
 ## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
 `blkar` improves on all listed shortcomings of `pres`, except 1., but
 trades performance and filesize for that. It is probably better suited
@@ -153,7 +133,28 @@ user    0m27,722s
 sys     0m1,086s
 ```
 
-# File Format Example
+# How it Works
+`pres` calculates and stores parity information for the given file
+using [Solomon Reed error correction](https://en.wikipedia.org/wiki/Reed_Solomon).
+
+Together with the original data and the newly generated parity
+information, hashes of the data and parity information are stored
+(multiple times, for fail safety) in a `*.pres` file. The hashes
+correlate to so called "shards", segments of the data and parity
+information, that can be restored once corrupted.
+
+## Verifying a files integrity:
+- Check if the copies of all shards' hashes match.
+- Check if the stored hashes of all shards match the ones
+  generated from the data and parity information.
+   
+## Restoring the data from a `*.pres` file
+- If there are at least as many shards intact, as there are data
+  shards, the corrupted shards can be restored.
+- Restoring the original data file is then simply a matter of
+  concatenating the now repaired data shards.
+
+## File Format Example
 ```
 <data><parity-information>
 
