@@ -41,8 +41,9 @@ the [releases page](https://github.com/codesoap/pres/releases).
 
 # Intended Use and Performance
 `pres` is intended to prevent a few bit-flips from corrupting a backup
-file. It is easy to use, way faster than it's alternatives and produces
-comparatively small output files (when using default configurations).
+file. It is designed to be easy to use, is really fast (thanks to
+klauspost's [great library](https://github.com/klauspost/reedsolomon))
+and the added filesize is just 3%.
 
 With 1GiB of random data, I got these timings on my (old and slow)
 test-machine; with a more modern CPU, performance is mainly limited by
@@ -61,16 +62,14 @@ user    0m2,157s
 sys     0m1,034s
 ```
 
-The resulting file will be ~3.0% larger than the original file.
-
 # Shortcomings
 1. Added or lost data is not handled. Few bytes gone missing or being
    added may be handled in the future.
 2. No in-place repair of `*.pres` files.
-3. Although the data and parity shards can take at least three bit-flips
-   without becoming unrestorable, two bit-flips can already destroy the
-   metadata.
-4. Changes in the filename or other meta-data are not prevented.
+3. Although the data and parity information can take at least three
+   bit-flips without becoming unrestorable, two bit-flips can already
+   destroy the metadata.
+4. Changes in the filename or other metadata are not prevented.
 
 # Comparison to similar software
 ## [darrenldl/blockyarchive](https://github.com/darrenldl/blockyarchive)
