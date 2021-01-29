@@ -1,4 +1,6 @@
-github.com/klauspost/cpuid v1.2.3 h1:CCtW0xUnWGVINKvE/WWOYKdsPV6mawAtvQuSl8guwQs=
-github.com/klauspost/cpuid v1.2.3/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
-github.com/klauspost/reedsolomon v1.9.3 h1:N/VzgeMfHmLc+KHMD1UL/tNkfXAt8FnUqlgXGIduwAY=
-github.com/klauspost/reedsolomon v1.9.3/go.mod h1:CwCi+NUr9pqSVktrkN+Ondf06rkhYZ/pcNv7fu+8Un4=
+github.com/klauspost/cpuid/v2 v2.0.2 h1:pd2FBxFydtPn2ywTLStbFg9CJKrojATnpeJWSP7Ys4k=
+github.com/klauspost/cpuid/v2 v2.0.2/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+github.com/klauspost/cpuid/v2 v2.0.3 h1:DNljyrHyxlkk8139OXIAAauCwV8eQGDD6Z8YqnDXdZw=
+github.com/klauspost/cpuid/v2 v2.0.3/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
+github.com/klauspost/reedsolomon v1.9.11 h1:n2kipJFo+CPqg7fH988XJXjqEyj14RJ8BYj7UayxPNg=
+github.com/klauspost/reedsolomon v1.9.11/go.mod h1:nLvuzNvy1ZDNQW30IuMc2ZWCbiqrJgdLoUS2X8HAUVg=
