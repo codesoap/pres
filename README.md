@@ -34,8 +34,7 @@ Renaming 'my_data.foo' to 'my_data.foo.pres'.
 
 # Installation
 To build from source and install the binary to `$HOME/go/bin/pres`,
-execute these steps (this is using the new go modules, so it will only
-work with go version >=1.13, or so):
+execute these steps:
 ```
 git clone 'https://github.com/codesoap/pres.git'
 cd pres
